@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLAYRUSH — Jocuri Digitale</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --black: #000000; --deep: #080810; --surface: #0d0d18; --card: #111120;
+    --cyan: #4dc8e8; --cyan-dim: #2a7a94; --white: #ffffff;
+    --white-dim: rgba(255,255,255,0.6); --font-display: 'Orbitron', monospace; --font-body: 'Rajdhani', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--deep); color: var(--white); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden; cursor: none; }
+  
+  /* NOISE OVERLAY */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* CUSTOM CURSOR */
+  #cursor { position: fixed; width: 10px; height: 10px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 10000; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+  #cursor-ring { position: fixed; width: 36px; height: 36px; border: 1px solid rgba(77,200,232,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: 0.1s ease-out; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+  .nav-logo { font-family: var(--font-display); font-size: 22px; color: var(--white); text-decoration: none; letter-spacing: 2px; }
+  .nav-logo span { color: var(--cyan); border-bottom: 2px solid var(--cyan); }
+  .nav-links { display: flex; gap: 30px; list-style: none; }
+  .nav-links a { color: var(--white-dim); text-decoration: none; text-transform: uppercase; font-size: 13px; letter-spacing: 1px; transition: 0.3s; }
+  .nav-links a:hover { color: var(--cyan); }
+  .nav-cart { background: none; border: 1px solid var(--cyan); color: var(--white); padding: 8px 20px; cursor: none; display: flex; gap: 10px; align-items: center; }
+  .cart-count { background: var(--cyan); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+
+  /* HERO & CHECKERED BACKGROUND */
+  .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; padding: 80px 20px; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(circle at center, #111128 0%, #080810 100%); z-index: -2; }
+  .hero-lines { position: absolute; inset: 0; background-image: linear-gradient(rgba(77,200,232,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(77,200,232,0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(circle, black, transparent 80%); }
+  .hero-scanline { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); animation: scan 8s linear infinite; opacity: 0.3; }
+  @keyframes scan { 0% { top: -2px; } 100% { top: 100%; } }
+
+  .hero-title { font-family: var(--font-display); font-size: clamp(50px, 10vw, 110px); font-weight: 900; line-height: 0.9; }
+  .hero-title span { color: transparent; -webkit-text-stroke: 1px var(--cyan); }
+  .hero-sub { margin-top: 20px; color: var(--white-dim); max-width: 500px; font-size: 18px; }
+  
+  .hero-cta { margin-top: 40px; display: flex; gap: 20px; }
+  .btn-primary, .btn-secondary { padding: 15px 35px; font-family: var(--font-body); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; text-decoration: none; transition: 0.3s; cursor: none; }
+  .btn-primary { background: var(--cyan); color: #000; border: none; }
+  .btn-primary:hover { box-shadow: 0 0 30px var(--cyan); transform: translateY(-3px); }
+  .btn-secondary { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* STATS */
+  .hero-stats { margin-top: 60px; display: flex; gap: 50px; }
+  .stat-num { font-family: var(--font-display); font-size: 30px; color: var(--cyan); }
+  .stat-label { font-size: 12px; color: var(--white-dim); text-transform: uppercase; letter-spacing: 2px; }
+
+  /* GAMES SECTION */
+  section { padding: 100px 48px; max-width: 1400px; margin: 0 auto; }
+  .section-header { margin-bottom: 50px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
+  .section-title { font-family: var(--font-display); font-size: 35px; }
+  #filterResetBtn { display: none; background: #ff4466; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: none; margin-bottom: 10px; }
+
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+  .game-card { background: var(--card); border: 1px solid rgba(255,255,255,0.05); transition: 0.4s; position: relative; }
+  .game-card:hover { transform: translateY(-10px); border-color: var(--cyan); }
+  .game-badge { position: absolute; top: 15px; left: 15px; background: var(--cyan); color: #000; padding: 4px 12px; font-weight: 900; font-size: 11px; z-index: 10; }
+  .game-cover-wrap { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+  .game-cover-wrap img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+  .game-card:hover .game-cover-wrap img { transform: scale(1.1); }
+  
+  .game-info { padding: 25px; }
+  .game-genre { color: var(--cyan); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+  .game-title { font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; }
+  .game-desc { font-size: 14px; color: var(--white-dim); line-height: 1.5; margin-bottom: 20px; height: 65px; overflow: hidden; }
+  .game-price { font-family: var(--font-display); font-size: 26px; color: var(--white); }
+  .btn-add { width: 100%; margin-top: 15px; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 12px; font-weight: bold; cursor: none; transition: 0.3s; }
+  .btn-add:hover, .btn-add.added { background: var(--cyan); color: #000; }
+
+  /* SIDEBARS & MODALS */
+  .cart-overlay, .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; }
+  .cart-overlay.open, .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .cart-sidebar { position: fixed; top: 0; right: 0; bottom: 0; width: 420px; background: #09090f; border-left: 1px solid var(--cyan); z-index: 2001; transform: translateX(100%); transition: 0.4s; padding: 40px; display: flex; flex-direction: column; }
+  .cart-sidebar.open { transform: translateX(0); }
+  .modal { background: #0d0d18; border: 1px solid var(--cyan); padding: 40px; width: 500px; max-width: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--cyan); color: #000; padding: 12px 25px; font-weight: bold; transition: 0.4s; z-index: 5000; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav>
+  <a href="#" class="nav-logo">PLAY<span>RUSH</span></a>
+  <ul class="nav-links">
+    <li><a href="#games">Magazin</a></li>
+    <li><a href="#games">Noutăți</a></li>
+    <li><a href="#" onclick="alert('Suport live indisponibil momentan.')">Suport</a></li>
+  </ul>
+  <button class="nav-cart" onclick="openCart()">
+    COȘ <div class="cart-count" id="cartCount">0</div>
+  </button>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-lines"></div>
+  <div class="hero-scanline"></div>
+  
+  <p style="color: var(--cyan); letter-spacing: 4px; font-size: 12px; margin-bottom: 10px;">LIVRARE INSTANTANEE • 100% DIGITAL</p>
+  <h1 class="hero-title">PLAY<span>RUSH</span></h1>
+  <p class="hero-sub">Titluri premium, experiențe de neuitat. Fără disc, fără așteptare. Doar jocul tău preferat, acum.</p>
+  
+  <div class="hero-cta">
+    <a href="#games" class="btn-primary" onclick="showAll()">Explorează Jocuri</a>
+    <a href="#games" class="btn-secondary" onclick="filterOffers()">Vezi Oferte</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">7+</div><div class="stat-label">Titluri</div></div>
+    <div class="stat"><div class="stat-num">24H</div><div class="stat-label">Suport</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Sigur</div></div>
+  </div>
+</div>
+
+<section id="games">
+  <div class="section-header">
+    <h2 class="section-title" id="sectionTitle">COLECȚIA NOASTRĂ</h2>
+    <button id="filterResetBtn" onclick="showAll()">← ÎNAPOI LA TOATE</button>
+  </div>
+  <div class="games-grid" id="gamesGrid"></div>
+</section>
+
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <h2 class="section-title">COȘ</h2>
+  <div id="cartItems" style="flex:1; margin-top:30px; overflow-y: auto;"></div>
+  <div style="border-top: 1px solid #222; padding-top:20px;">
+    <div style="display:flex; justify-content:space-between; font-size: 24px; font-family: var(--font-display);">
+      <span>TOTAL:</span>
+      <span id="cartTotal">0.00</span>
+    </div>
+    <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="openCheckout()">FINALIZARE PLATĂ →</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal">
+    <h2 class="section-title" style="font-size: 24px;">CHECKOUT</h2>
+    <div id="orderSummary" style="margin: 20px 0; background: rgba(255,255,255,0.05); padding: 15px;"></div>
+    <input type="text" id="fname" placeholder="Nume Complet" style="width:100%; padding:12px; margin-bottom:10px; background: #000; border:1px solid #333; color:white;">
+    <input type="email" id="femail" placeholder="Email (pentru livrare cod)" style="width:100%; padding:12px; margin-bottom:10px; background: #000; border:1px solid #333; color:white;">
+    <button class="btn-primary" style="width:100%;" onclick="placeOrder()">PLĂTEȘTE ACUM</button>
+    <button onclick="closeCheckout()" style="width:100%; background:none; border:none; color:gray; margin-top:10px; cursor:none;">Înapoi</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Adăugat în coș!</div>
+
+<script>
+  const games = [
+    { id: 1, title: "Grand Theft Auto V", price: 29.99, genre: "Acțiune / Open World", badge: "Bestseller", desc: "O poveste epică despre crimă și supraviețuire în Los Santos.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/271590/header.jpg" },
+    { id: 2, title: "The Last of Us Part I", price: 29.99, genre: "Aventură", badge: null, desc: "O călătorie emoționantă într-o lume post-apocaliptică dură.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/1888930/header.jpg" },
+    { id: 3, title: "Black Myth: Wukong", price: 34.99, genre: "Action RPG", badge: "Popular", desc: "Inspirat de mitologia chineză, înfruntă legende și demoni spectaculoși.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/2358720/header.jpg" },
+    { id: 4, title: "Cyberpunk 2077", price: 34.99, genre: "Sci-Fi RPG", badge: "Ofertă", desc: "Night City te așteaptă. Devino un mercenar legendar în viitor.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/1091500/header.jpg" },
+    { id: 5, title: "Red Dead Redemption II", price: 24.99, genre: "Western", badge: "Ofertă", desc: "O poveste despre onoare și răscumpărare în Vestul Sălbatic.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg" },
+    { id: 6, title: "Hogwarts Legacy", price: 17.99, genre: "Fantasy RPG", badge: null, desc: "Trăiește propria ta aventură la școala de magie Hogwarts.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/990080/header.jpg" },
+    { id: 7, title: "EA FC 25", price: 19.99, genre: "Sport", badge: "Nou", desc: "Simularea de fotbal supremă cu cele mai noi echipe și tehnologii.", cover: "https://cdn.akamai.steamstatic.com/steam/apps/2195250/header.jpg" },
+  ];
+
+  let cart = [];
+
+  // Cursor
+  document.addEventListener('mousemove', e => {
+    document.getElementById('cursor').style.left = e.clientX + 'px';
+    document.getElementById('cursor').style.top = e.clientY + 'px';
+    document.getElementById('cursor-ring').style.left = e.clientX + 'px';
+    document.getElementById('cursor-ring').style.top = e.clientY + 'px';
+  });
+
+  function renderGames(data) {
+    const grid = document.getElementById('gamesGrid');
+    grid.innerHTML = data.map(g => `
+      <div class="game-card">
+        ${g.badge ? `<div class="game-badge">${g.badge}</div>` : ''}
+        <div class="game-cover-wrap"><img src="${g.cover}" alt="${g.title}"></div>
+        <div class="game-info">
+          <div class="game-genre">${g.genre}</div>
+          <div class="game-title">${g.title}</div>
+          <div class="game-desc">${g.desc}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="game-price">${g.price.toFixed(2)} LEI</div>
+            <button class="btn-add ${cart.some(c => c.id === g.id) ? 'added' : ''}" onclick="addToCart(${g.id})">
+              ${cart.some(c => c.id === g.id) ? '✓ ADĂUGAT' : '+ COȘ'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterOffers() {
+    const offers = games.filter(g => g.badge === "Ofertă" || g.badge === "Bestseller");
+    renderGames(offers);
+    document.getElementById('sectionTitle').innerText = "OFERTE LIMITATE";
+    document.getElementById('filterResetBtn').style.display = "block";
+  }
+
+  function showAll() {
+    renderGames(games);
+    document.getElementById('sectionTitle').innerText = "COLECȚIA NOASTRĂ";
+    document.getElementById('filterResetBtn').style.display = "none";
+  }
+
+  function addToCart(id) {
+    if(cart.some(c => c.id === id)) return;
+    const game = games.find(g => g.id === id);
+    cart.push(game);
+    updateCart();
+    showToast(`${game.title} a fost adăugat.`);
+    renderGames(games);
+  }
+
+  function updateCart() {
+    document.getElementById('cartCount').innerText = cart.length;
+    document.getElementById('cartItems').innerHTML = cart.map(g => `
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:rgba(255,255,255,0.03); padding:10px;">
+        <span>${g.title}</span>
+        <b style="color:var(--cyan)">${g.price} LEI</b>
+      </div>
+    `).join('');
+    const total = cart.reduce((s, g) => s + g.price, 0);
+    document.getElementById('cartTotal').innerText = total.toFixed(2);
+  }
+
+  function openCart() { document.getElementById('cartOverlay').classList.add('open'); document.getElementById('cartSidebar').classList.add('open'); }
+  function closeCart() { document.getElementById('cartOverlay').classList.remove('open'); document.getElementById('cartSidebar').classList.remove('open'); }
+  
+  function openCheckout() {
+    if(cart.length === 0) return;
+    closeCart();
+    document.getElementById('orderSummary').innerText = "Produse selectate: " + cart.map(g => g.title).join(', ');
+    document.getElementById('checkoutModal').classList.add('open');
+  }
+  function closeCheckout() { document.getElementById('checkoutModal').classList.remove('open'); }
+
+  function placeOrder() {
+    const email = document.getElementById('femail').value;
+    if(!email) return alert("Avem nevoie de email pentru livrare!");
+    alert("Mulțumim! Vei primi codurile de activare pe " + email + " imediat ce plata este procesată.");
+    cart = []; updateCart(); closeCheckout(); renderGames(games);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  renderGames(games);
+</script>
+</body>
+</html>
